@@ -6,6 +6,7 @@ var express = require('express'); // include our express libs
 var mime = require('mime');
 var fs = require('fs');
 var util = require('util');
+var url = require("url");
 var http_range_req = require('./http_range_req.js');
 var image_svc_path;
 
@@ -55,29 +56,58 @@ function respondWithFileMK(path, res) {
 function respondWithFile(path, res, req) {
     if (path != null) {
         try {
-            var start_offset;
-            var end_offset;
+	    var range = typeof req.headers.range === "string" ? req.headers.range : undefined;
+	    var reqUrl = url.parse(req.url, true);
+	    var info = {};
             var mimetype = mime.lookup(path);
             var stat = fs.statSync(path);
+	    var code = 200;
+            var header;
+            
+	    info.start_offset = 0;
+            info.end_offset = stat.size - 1;
+            info.size = stat.size;
+	    info.modified = stat.mtime;
+	    info.rangeRequest = false;  
 
-            if (req.headers['range'] != undefined) {
-                var offsets = http_range_req.getRange(req.headers['range'], stat.size);
-                start_offset = offsets[0];
-                end_offset = offsets[1];
-            } else {
-                start_offset = 0;
-                end_offset = stat.size - 1;
-            }
+	    if (range !== undefined && (range = range.match(/bytes=(.+)-(.+)?/)) !== null) {
+		// Check range contains numbers and they fit in the file.
+	    	info.start_offset = isNumber(range[1]) && range[1] >= 0 && range[1] < info.end_offset ? range[1] - 0 : info.start_offset;
+		info.end_offset = isNumber(range[2]) && range[2] > info.start_offset && range[2] <= info.end_offset ? range[2] - 0 : info.end_offset;
+		info.rangeRequest = true;
+	    } else if (reqUrl.query.start || reqUrl.query.end) {
+		// This is a range request, but doesn't get range headers. So there
+		info.start_offset = isNumber(reqUrl.query.start) && reqUrl.query.start >= 0 && reqUrl.query.start < info.end_offset ? reqUrl.query.start - 0 : info.start_offset;
+		info.end_offset = isNumber(reqUrl.query.end) && reqUrl.query.end > info.start_offset && reqUrl.query.end <= info.end_offset ? reqUrl.query.end - 0 : info.end_offset;	
+	    }
 
-            var fileStream = fs.createReadStream(path, {start: start_offset, end: end_offset});
-            res.setHeader('Content-length', (end_offset - start_offset + 1));
-            res.writeHead(200, {'Content-Type': mimetype});
-	    util.pump(fileStream, res);
+	    info.length = info.end_offset - info.start_offset + 1;
+	    header = {
+		"Cache-Control": "public",
+		"Connection": "keep-alive",
+		"Content-Type": mimetype,
+		"Content-Disposition": "inline; filename=" + path + ";"
+            };
 
+	    if (info.rangeRequest) {
+		// Partial http response
+		code = 206;
+		header.Status = "206 Partial Content";
+		header["Accept-Ranges"] = "bytes";
+		header["Content-Range"] = "bytes " + info.start_offset + "-" + info.end_offset + "/" + info.size;
+	    }
+
+	    header.Pragma = "public";
+	    header["Last-Modified"] = info.modified.toUTCString();
+	    header["Content-Length"] = info.length;
+	    res.writeHead(code,header);
+	    var filestream = fs.createReadStream(path, { flags: "r", start: info.start_offset, end: info.end_offset });
+	    //util.pump(fileStream, res);
+	    filestream.pipe(res);
             console.log("\tSending: " + path);
             console.log("\tMimetype: " + mimetype);
-            console.log("\tSize: " + stat.size);
-            console.log("\tStart: " + start_offset + " / End: " + end_offset);
+            console.log("\tSize: " + info.size);
+            console.log("\tStart: " + info.start_offset + " / End: " + info.end_offset);
         }
         catch (err)
         {
@@ -116,6 +146,9 @@ function getArguments(args_array) {
     return arg_string;
 }
 
+function isNumber(n) {
+	return !isNaN(parseFloat(n)) && isFinite(n);
+}
 
 function getRange() {
     // This handles range requests per (http://tools.ietf.org/html/draft-ietf-http-range-retrieval-00)
