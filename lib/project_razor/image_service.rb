@@ -5,7 +5,7 @@ require "project_razor/image_service/vmware_hypervisor"
 
 module ProjectRazor
   # Base namespace for Razor image service
-  # TODO add possible linking to Glance service for pulling/storing images
+  # TODO ssadd possible linking to Glance service for pulling/storing images
   module ImageService
 
   end
