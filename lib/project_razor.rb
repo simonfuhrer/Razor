@@ -5,7 +5,7 @@ $logging_path = "#{$razor_root}/log/project_razor.log"
 $temp_path = "#{$razor_root}/tmp"
 
 #puts "Razor root: #{$razor_root}"
-#puts "Logging path: #{$logging_path}"
+# puts "Logging path: #{$logging_path}"
 
 require 'set'
 require "project_razor/object"
