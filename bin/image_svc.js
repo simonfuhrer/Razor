@@ -5,6 +5,7 @@ var exec = require("child_process").exec; // create our exec object
 var express = require('express'); // include our express libs
 var mime = require('mime');
 var fs = require('fs');
+var util = require('util');
 var http_range_req = require('./http_range_req.js');
 var image_svc_path;
 
@@ -44,12 +45,8 @@ function respondWithFileMK(path, res) {
         res.writeHead(200, {'Content-Type': 'application/octet-stream'});
 
         var fileStream = fs.createReadStream(path);
-        fileStream.on('data', function(chunk) {
-            res.write(chunk);
-        });
-        fileStream.on('end', function() {
-            res.end();
-        });
+        util.pump(fileStream, res);
+    
     } else {
         res.send("Error", 404, {"Content-Type": "application/octet-stream"});
     }
@@ -75,15 +72,8 @@ function respondWithFile(path, res, req) {
             var fileStream = fs.createReadStream(path, {start: start_offset, end: end_offset});
             res.setHeader('Content-length', (end_offset - start_offset + 1));
             res.writeHead(200, {'Content-Type': mimetype});
+	    util.pump(fileStream, res);
 
-            fileStream.on('data', function(chunk) {
-                process.stdout.write(".");
-                res.write(chunk);
-            });
-            fileStream.on('end', function() {
-                process.stdout.write("!\n");
-                res.end();
-            });
             console.log("\tSending: " + path);
             console.log("\tMimetype: " + mimetype);
             console.log("\tSize: " + stat.size);
