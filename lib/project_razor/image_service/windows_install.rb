@@ -20,6 +20,13 @@ module ProjectRazor
         $?.success?
       end
 
+      def get_dir_hash(dir)
+        logger.debug "Generating hash for path: #{dir}"
+        files_string = Dir.glob("#{dir}/**/*").map {|x| x.sub("#{dir}/","")}.sort.join("\n").sub("\nwimboot","").sub("\nsources\install.wim","\nsources\install.iso")
+        Digest::SHA2.hexdigest(files_string)
+      end
+
+
       def set_win_path(path)
         @_win_svc_path = path[0,path.rindex("/")] + "/win"
       end
@@ -73,6 +80,7 @@ module ProjectRazor
       def add(src_image_path, image_svc_path, extra)
         set_win_path(image_svc_path)
         begin
+
           unless command?(IMAGEX_COMMAND)
             logger.error "missing imagex command: #{IMAGEX_COMMAND}"
             return [false, "Missing imagex command. Install it from http://sourceforge.net/projects/wimlib/"]
@@ -94,7 +102,13 @@ module ProjectRazor
               logger.error "Posttasks failed"
               return [false, "Posttatsks failed"]
             end
-
+	
+	    unless copyto(src_image_path,installiso_path)
+              logger.error "Copy ISO to ImagePath failed"
+              return [false, "Copy ISO to ImagePath failed"]	
+	    end
+            FileUtils.rm_r(installwim_path, :force => true)
+ 
             return resp
           else
             resp
@@ -131,7 +145,7 @@ module ProjectRazor
 
         if @windows_architecture == "x86_64"
           unless File.exists?(httpdiskdriver64_path)
-            logger.error "#{httpdiskdriver64_path} drivers not found"
+            logger.error "#{httpdiskdriver64_path} driver not found"
             return false
           end
 
@@ -141,7 +155,7 @@ module ProjectRazor
           end
         else
           unless File.exists?(httpdiskdriver_path)
-            logger.error "#{httpdiskdriver_path} drivers not found"
+            logger.error "#{httpdiskdriver_path} driver not found"
             return false
           end
 
@@ -338,6 +352,10 @@ module ProjectRazor
 
       def bootsdi_path
         image_path + "/boot/boot.sdi"
+      end
+
+      def installiso_path
+	image_path + "/sources/install.iso"
       end
 
       def bootwim_path
