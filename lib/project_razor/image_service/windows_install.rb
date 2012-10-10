@@ -22,7 +22,8 @@ module ProjectRazor
 
       def get_dir_hash(dir)
         logger.debug "Generating hash for path: #{dir}"
-        files_string = Dir.glob("#{dir}/**/*").map {|x| x.sub("#{dir}/","")}.sort.join("\n").sub("\nwimboot","").sub("\nsources\install.wim","\nsources\install.iso")
+        files_string = Dir.glob("#{dir}/**/*").map {|x| x.sub("#{dir}/","")}.sort.join("\n").sub("\nwimboot","").sub("\nsources\install.wim","\ninstall.iso")
+	puts files_string
         Digest::SHA2.hexdigest(files_string)
       end
 
@@ -175,15 +176,32 @@ module ProjectRazor
 	    logger.error "Copy failed"
 	    return false
 	  end
+	  
+	  driverpath = "#{mount_path_bootwim}/Windows/System32/drivers/httpdisk.sys" 
+	  if File.directory?("#{mount_path_bootwim}/Windows/System32/Driverss")
+	    driverpath = "#{mount_path_bootwim}/Windows/System32/Drivers/httpdisk.sys"
+	  end
 
-	  unless copyto(httpdiskdriver64_path,"#{mount_path_bootwim}/Windows/System32/Drivers/httpdisk.sys")
-	   logger.error "Copy failed"
-	   return false
-	  end 
+	  if @windows_architecture == "x86_64"
+	    unless copyto(httpdiskdriver64_path,driverpath)
+	      logger.error "Copy failed"
+	      return false
+	    end 
 
-	  unless copyto(httpdisk64_path,"#{mount_path_bootwim}/Windows/System32/httpdisk.exe")
-	    logger.error "Copy failed"
-	    return false
+	    unless copyto(httpdisk64_path,"#{mount_path_bootwim}/Windows/System32/httpdisk.exe")
+	      logger.error "Copy failed"
+	      return false
+	    end
+	  else
+            unless copyto(httpdiskdriver_path,driverpath)
+              logger.error "Copy failed"
+              return false
+            end
+
+            unless copyto(httpdisk_path,"#{mount_path_bootwim}/Windows/System32/httpdisk.exe")
+              logger.error "Copy failed"
+              return false
+            end
 	  end
 
 	  unless copyto(wimboot_path,"#{image_path}/wimboot") 
@@ -355,7 +373,7 @@ module ProjectRazor
       end
 
       def installiso_path
-	image_path + "/sources/install.iso"
+	image_path + "/install.iso"
       end
 
       def bootwim_path
