@@ -1,0 +1,22 @@
+<installation mode="fresh" srtype="lvm">
+<bootloader>grub</bootloader>
+<primary-disk gueststorage="yes">sda</primary-disk>
+<keymap>de</keymap>
+<hostname><%= hostname %></hostname>
+<root-password><%= @root_password %></root-password>
+<source type="url">http://<%= config.image_svc_host %>:<%= config.image_svc_port %>/razor/image/xenserver/<%= @image_uuid %></source>
+<admin-interface name="eth0" proto="static">
+<ip>192.168.2.178</ip>
+<subnet-mask>255.255.255.0</subnet-mask>
+<gateway><%= @gateway %></gateway>
+</admin-interface>
+<nameserver><%= @nameserver %></nameserver>
+<timezone>Europe/Zurich</timezone>
+<script stage="filesystem-populated" type="url">
+<%= api_svc_uri %>/policy/callback/<%= policy_uuid %>/xenserverinstall_xml/end
+</script>
+<script stage="installation-complete" type="url">
+<%= api_svc_uri %>/policy/callback/<%= policy_uuid %>/postinstall/download
+</script>
+</installation>
+

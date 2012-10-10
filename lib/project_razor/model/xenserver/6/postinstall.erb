@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+#   XenServer Automated Build Post Install Setup Script
+#
+# Download setup script and set up to be executed on reboot.
+wget <%= api_svc_uri %>/policy/callback/<%= policy_uuid %>/postinstall/inject -O /tmp/root/etc/rc3.d/S99post-install-script.sh
+chmod +x /tmp/root/etc/rc3.d/S99post-install-script.sh
+

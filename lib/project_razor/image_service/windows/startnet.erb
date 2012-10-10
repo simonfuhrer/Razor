@@ -1,0 +1,8 @@
+wpeinit
+rem reg import %SYSTEMROOT%\System32\httpdisk.reg
+sc create httpdisk binPath=  %SYSTEMROOT%\system32\drivers\httpdisk.sys type= kernel start= demand DisplayName= httpdisk
+sc start httpdisk
+set APISVC=<%= api_svc_uri %>
+set IMGSVC=<%= image_svc_uri %>
+
+start %SYSTEMROOT%\System32\cscript.exe %SYSTEMROOT%\System32\razorconf.vbs %APISVC%

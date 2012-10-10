@@ -1,0 +1,18 @@
+#!ipxe
+echo Razor <%= @label %> model boot_call
+echo Installation node UUID : <%= node.uuid %>
+echo Installation image UUID: <%= @image_uuid %>
+echo Active Model node state: <%= @current_state %>
+echo Installation Source ISO: <%= "#{image_svc_uri}/#{@image_uuid}/sources.iso" %> 
+echo Unattended XML         : <%= "#{api_svc_uri}/policy/callback/#{policy_uuid}/windowsunattended_xml/file" %> 
+
+sleep 3
+echo sanboot --no-describe --drive 0x80
+kernel <%= "#{image_svc_uri}/#{@image_uuid}/wimboot" %>
+initrd <%= "#{image_svc_uri}/#{@image_uuid}/bootmgr" %> bootmgr
+initrd <%= "#{image_svc_uri}/#{@image_uuid}/boot/bcd" %> BCD
+initrd <%= "#{image_svc_uri}/#{@image_uuid}/boot/boot.sdi" %> boot.sdi
+initrd <%= "#{image_svc_uri}/#{@image_uuid}/sources/boot.wim" %> boot.wim
+boot
+shell
+exit

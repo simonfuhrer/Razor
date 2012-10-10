@@ -1,0 +1,103 @@
+set macaddresses =  GetMacAddresses()
+items = macaddresses.Items
+For i = 0 To UBound(items)
+  m = items(i)
+  ConfigureEnviroment m, Wscript.Arguments.Item(0)
+next 
+wscript.sleep 500
+'good = "00:0c:29:09:08:fd"
+'ConfigureEnviroment good
+Function GetMacAddresses()
+  Set WshShell = CreateObject("WScript.Shell")
+  Set hash = CreateObject("Scripting.Dictionary")
+  ipconfig = WshShell.Exec("ipconfig /all").StdOut.ReadAll()
+  if instr(1,ipconfig,". . . . . . . . . .") > 0 then
+    splitedipconfig = split(ipconfig,vbCrLf)
+    i = 0
+    For Each line In splitedipconfig
+      li = Mid(line ,instr(line ,":") +2)
+      if len(li) = 17 then    'len 17 = maccaddress
+        i = i +1
+        hash.add i,li
+      end if
+    Next
+  end if  
+ Set GetMacAddresses = hash
+End Function
+
+
+
+
+Function ConfigureEnviroment(mac,uri)
+  convertedmac = replace(mac,"-",":")
+  Set WshShell = CreateObject("WScript.Shell")
+  Set http = CreateObject("Microsoft.XmlHttp")
+  query = uri & "/boot?hw_id=" +convertedmac
+  wscript.echo "Get: " & query
+  http.open "GET", query, FALSE
+  http.send ""
+  res =  http.responseText
+  do until http.Status = 200 :  wscript.sleep(1000) :  loop  
+  If InStr(1,res , "razor/image/mk/") = 0 then
+    'wscript.echo  res
+    nodeuuid = ""
+    imageuuid = ""
+    imageurl = ""
+    isourl = ""
+    splitedresponse = split(res,Chr(10))
+    For Each line In splitedresponse
+      Select Case True
+        case (Instr(line, "node UUID") > 0 )
+          nodeuuid = Mid(line,instr(line,":") +2)
+          wscript.echo "Node UUID: " & nodeuuid
+        case Instr(line, "image UUID") > 0
+          imageuuid = Mid(line ,instr(line ,":") +2)
+          wscript.echo "Image UUID: " & imageuuid
+        case Instr(line, "/bootmgr bootmgr") > 0
+          imageurl = Mid(line,8,instrrev(line,"/")-8)
+          wscript.echo "Image URL: " & imageurl
+        case Instr(line, ".iso") > 0
+          isourl = trim(Mid(line,instr(line,":") +2))
+          wscript.echo "ISO URL: " & isourl
+	case Instr(line,"Unattended XML") > 0
+	  unaxml = trim(Mid(line,instr(line,":") +2))
+	  wscript.echo "XML URL: " & unaxml
+      End Select    
+    next
+    
+    if len(imageurl) > 0  and len(nodeuuid) > 0  and len(imageuuid) > 0 then
+      commandLine = "httpdisk.exe /mount 1 " & isourl & " /cd y:" 
+      set httpdiskoutput = WshShell.Exec(commandLine)
+      Do While httpdiskoutput.Status = 0
+           WScript.Sleep 100
+           WScript.echo httpdiskoutput.StdOut.ReadAll()
+           WScript.echo httpdiskoutput.StdErr.ReadAll()
+      
+      loop
+      wscript.sleep 500
+      http.open "GET",unaxml,FALSE
+      http.send ""
+      do until http.Status = 200 :  wscript.sleep(1000) :  loop
+      Set objADOStream = CreateObject("ADODB.Stream")
+      objADOStream.Open
+      'adTypeBinary
+      objADOStream.Type = 1
+      objADOStream.Write http.ResponseBody
+      objADOStream.Position = 0
+      Set objFSO = Createobject("Scripting.FileSystemObject")
+      If objFSO.Fileexists("x:\una.xml") Then objFSO.DeleteFile "x:\una.xml"
+      Set objFSO = Nothing
+      bjADOStream.SaveToFile "x:\una.xml" 
+      objADOStream.Close
+      Set objADOStream = Nothing
+    end if
+    
+  else 
+    wscript.echo "No Node found for MACAddress: " & convertedmac 
+  
+  end if
+
+End Function
+
+
+
