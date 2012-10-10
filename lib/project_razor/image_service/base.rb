@@ -49,7 +49,7 @@ module ProjectRazor
           return cleanup([false,"File does not exist"]) unless File.exist?(fullpath)
 
           # Make sure it has an .iso extension
-          return cleanup([false,"File is not an ISO"]) if @filename[-4..-1].downcase!!= ".iso"
+          return cleanup([false,"File is not an ISO"]) if @filename[-4..-1].downcase != ".iso"
 
           File.size(src_image_path)
 
