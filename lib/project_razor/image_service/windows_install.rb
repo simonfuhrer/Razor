@@ -162,7 +162,7 @@ module ProjectRazor
 	    return false
 	  end
 
-	  unless copyto(httpdiskdriver64_path,"#{mount_path_bootwim}/Windows/System32/drivers/httpdisk.sys")
+	  unless copyto(httpdiskdriver64_path,"#{mount_path_bootwim}/Windows/System32/Drivers/httpdisk.sys")
 	   logger.error "Copy failed"
 	   return false
 	  end 
