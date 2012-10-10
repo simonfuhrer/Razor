@@ -86,8 +86,13 @@ module ProjectRazor
           resp = super(src_image_path, image_svc_path, extra)
           if resp[0]
             unless verify(image_svc_path)
-              logger.error "Missing metadatassss"
+              logger.error "Missing metadata"
               return [false, "Missing metadata"]
+            end
+
+            unless posttasks(image_svc_path)
+              logger.error "Posttasks failed"
+              return [false, "Posttatsks failed"]
             end
 
             return resp
@@ -249,7 +254,6 @@ module ProjectRazor
 	  if names != nil 
 	    @windows_images = names
 	  end
-	  names.each {|key, value| puts "#{key} is #{value}" }
 
           if @windows_version == nil
             logger.error "Windows version is nil"
@@ -265,12 +269,6 @@ module ProjectRazor
             logger.error "Windows language is nil"
             return false
           end
-
-          unless posttasks(image_svc_path)
-            logger.error "Posttasks failed"
-            return false
-          end
-
 
           true
 
