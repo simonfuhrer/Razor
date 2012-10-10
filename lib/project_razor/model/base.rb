@@ -249,13 +249,22 @@ module ProjectRazor
         end
       end
 
-      def cli_create_metadata
+      def cli_create_metadata(image_uuid)
         puts "--- Building Model (#{name}): #{label}\n".yellow
+
         req_metadata_hash.each_key { |key|
           metadata = map_keys_to_symbols(req_metadata_hash[key])
           key = key.to_sym if !key.is_a?(Symbol)
-          flag = false
+	  flag = false
+	  description = "#{metadata[:description]}\n" 
           until flag
+	    if metadata[:datafromimg] && metadata[:imginstance] != nil 
+	        @image = get_data.fetch_object_by_uuid(:images, image_uuid)
+		ds = description
+		windows_images = @image.instance_variable_get(metadata[:imginstance])
+		windows_images.each {|keyimages, value| ds = "#{ds}  Index: #{keyimages} Name: #{value}\n" }
+		metadata[:description] = ds
+	    end
             print "Please enter " + "#{metadata[:description]}".yellow.bold
             print " (example: " + "#{metadata[:example]}".yellow + ") \n"
             puts "default: " + "#{metadata[:default]}".yellow if metadata[:default] != ""
@@ -278,8 +287,18 @@ module ProjectRazor
                   puts "No default value, must enter something".red
                 end
               else
-                flag = set_metadata_value(key, response, metadata[:validation])
-                puts "Value (".red + "#{response}".yellow + ") is invalid".red unless flag
+		if metadata[:datafromimg]
+		        regex = Regexp.new("^[1-#{@image.windows_images}]")
+			if regex =~ response
+			   response = @image.windows_images[response]
+			   flag = set_metadata_value(key, response, metadata[:validation])
+			end
+			puts "Value (".red + "#{response}".yellow + ") is invalid".red unless flag
+	
+		else
+                  flag = set_metadata_value(key, response, metadata[:validation])
+                  puts "Value (".red + "#{response}".yellow + ") is invalid".red unless flag
+		end
             end
           end
         }

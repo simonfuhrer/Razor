@@ -108,11 +108,10 @@ module ProjectRazor
         raise ProjectRazor::Error::Slice::InvalidUUID, "Invalid Image UUID [#{image_uuid}] " unless image
         # use the arguments passed in (above) to create a new model
         if @web_command
-          raise ProjectRazor::Error::Slice::MissingArgument, "Must Provide Required Metadata [req_metadata_hash]" unless
-              req_metadata_hash
+          raise ProjectRazor::Error::Slice::MissingArgument, "Must Provide Required Metadata [req_metadata_hash]" unless req_metadata_hash
           model.web_create_metadata(req_metadata_hash)
         else
-          raise ProjectRazor::Error::Slice::UserCancelled, "User cancelled Model creation" unless model.cli_create_metadata
+          raise ProjectRazor::Error::Slice::UserCancelled, "User cancelled Model creation" unless model.cli_create_metadata image.uuid
         end
         model.label = label
         model.image_uuid = image.uuid

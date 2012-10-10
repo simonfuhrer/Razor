@@ -169,6 +169,12 @@ module ProjectRazor
                        :os => {:desc => "OS Install ISO",
                                :classname => "ProjectRazor::ImageService::OSInstall",
                                :method => "add_os"},
+                       :xenserver => {:desc => "XenServer Hypervisor ISO",
+                               :classname => "ProjectRazor::ImageService::XenServerHypervisor",
+                               :method => "add_xenserver"},
+                       :windows => {:desc => "Windows ISO",
+                               :classname => "ProjectRazor::ImageService::WindowsInstall",
+                               :method => "add_windows"},
                        :esxi => {:desc => "VMware Hypervisor ISO",
                                  :classname => "ProjectRazor::ImageService::VMwareHypervisor",
                                  :method => "add_esxi"}}
@@ -224,6 +230,16 @@ module ProjectRazor
       end
 
       def add_esxi(new_image, iso_path, image_svc_path)
+        puts "Attempting to add, please wait...".green
+        new_image.add(iso_path, image_svc_path, nil)
+      end
+   
+      def add_xenserver(new_image, iso_path, image_svc_path)
+        puts "Attempting to add, please wait...".green
+        new_image.add(iso_path, image_svc_path, nil)
+      end
+
+      def add_windows(new_image, iso_path, image_svc_path)
         puts "Attempting to add, please wait...".green
         new_image.add(iso_path, image_svc_path, nil)
       end

@@ -49,7 +49,7 @@ module ProjectRazor
           return cleanup([false,"File does not exist"]) unless File.exist?(fullpath)
 
           # Make sure it has an .iso extension
-          return cleanup([false,"File is not an ISO"]) if @filename[-4..-1] != ".iso"
+          return cleanup([false,"File is not an ISO"]) if @filename[-4..-1].downcase!!= ".iso"
 
           File.size(src_image_path)
 
@@ -107,7 +107,7 @@ module ProjectRazor
         set_image_svc_path(image_svc_path) unless @_image_svc_path != nil
         get_dir_hash(image_path) == @verification_hash
       end
-
+     
       def image_path
         @_image_svc_path + "/" + @uuid
       end
@@ -182,7 +182,7 @@ module ProjectRazor
 
       def get_dir_hash(dir)
         logger.debug "Generating hash for path: #{dir}"
-
+	#puts  "Generating hash for path: #{dir}"
         files_string = Dir.glob("#{dir}/**/*").map {|x| x.sub("#{dir}/","")}.sort.join("\n")
         Digest::SHA2.hexdigest(files_string)
       end
