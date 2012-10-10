@@ -14,6 +14,7 @@ __read the release notes before upgrading__
 
 * [Nicholas Weaver](https://github.com/lynxbat)
 * [Tom McSweeney](https://github.com/tjmcs)
+* SFU
 
 ## Installation
 
